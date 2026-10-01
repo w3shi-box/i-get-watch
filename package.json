@@ -1,31 +1,12 @@
 {
-  "name": "my-express-api",
-  "version": "1.0.0",
-  "description": "A production-ready Node.js REST API Built with Express",
-  "main": "src/index.js",
-  "type": "module",
+  "name": "i-get-watch",
+  "version": "0.1.0",
+  "description": "Tiny file-watch CLI",
+  "main": "index.js",
+  "bin": { "igw": "index.js" },
   "scripts": {
-    "start": "node src/index.js",
-    "dev": "nodemon src/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node index.js",
+    "test": "node test.js"
   },
-  "keywords": [
-    "node",
-    "express",
-    "rest-api",
-    "esmodules"
-  ],
-  "author": "Jane Doe <jane.doe@example.com>",
-  "license": "MIT",
-  "dependencies": {
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
-    "express": "^5.1.0"
-  },
-  "devDependencies": {
-    "nodemon": "^3.1.14"
-  },
-  "engines": {
-    "node": ">=20.0.0"
-  }
+  "license": "MIT"
 }
