@@ -1,12 +1,1 @@
-{
-  "name": "i-get-watch",
-  "version": "0.1.0",
-  "description": "Tiny file-watch CLI",
-  "main": "index.js",
-  "bin": { "igw": "index.js" },
-  "scripts": {
-    "start": "node index.js",
-    "test": "node test.js"
-  },
-  "license": "MIT"
-}
+abvc
