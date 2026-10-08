@@ -39,4 +39,5 @@ jobs:
           claude_args: |
             --permission-mode auto
             --disallowedTools "WebFetch,WebSearch,Write,Edit,MultiEdit,NotebookEdit"
-            --model claude-opus-4-6
+            --model claude-haiku-4-5
+
