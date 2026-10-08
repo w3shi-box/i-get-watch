@@ -1,7 +1,9 @@
-name: Issue Triage
+name: Issue Triage Test
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - main
 
 jobs:
   triage:
