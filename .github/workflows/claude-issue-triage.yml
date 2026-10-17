@@ -1,51 +1,59 @@
-name: Issue Triage
+# This file was copied from https://github.com/anthropics/claude-code-action/blob/main/examples/claude.yml.
+name: Claude Code
+
 on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
   issues:
-    types: [opened]          # (A) untrusted trigger — any account, default-branch context
+    types: [opened, assigned]
+  pull_request_review:
+    types: [submitted]
 
 jobs:
-  triage:
+  claude:
+    if: |
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
+      (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude')))
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     permissions:
-      contents: read
-      issues: write          # (D) secret/token in scope
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read # Required for Claude to read CI results on PRs
     steps:
-      - uses: actions/checkout@v6   # keep: this is the cache/post-step pivot sink
-
-      - name: Build prompt
-        uses: actions/github-script@v7
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
-          script: |
-            const fs = require('fs');
-            const i = context.payload.issue;
-            // (B) injection surface — attacker title/body dropped into the instruction channel, unsanitized
-            const prompt = [
-              'You are triaging a new GitHub issue. Classify type and priority.',
-              `ISSUE NUMBER: ${i.number}`,
-              `TITLE: ${i.title}`,
-              `AUTHOR: ${i.user.login}`,
-              'BODY:',
-              i.body || '(empty)',
-              '',
-              'Output your analysis directly.',
-            ].join('\n');
-            fs.writeFileSync('/tmp/prompt.txt', prompt);
+          fetch-depth: 1
+          persist-credentials: false
 
-      - name: Run Claude
+      - name: Checkout PR branch for PR comments
+        if: github.event_name == 'issue_comment' && github.event.issue.pull_request
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh pr checkout ${{ github.event.issue.number }}
+
+      - name: Run Claude Code
         id: claude
-        uses: anthropics/claude-code-base-action@beta
+        uses: anthropics/claude-code-action@0432df8bfe0572278dd19bca33be32cdc8061ebb  # v1.0.87
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}   # (D) secret the sink can read
-          prompt_file: /tmp/prompt.txt
-          allowed_tools: "View,GrepTool,Bash"   # (C) exec sink — Bash = arbitrary RCE
-          model: "claude-haiku-4-5"              # cost knob: cheap model
-          max_turns: "5"                         # cost knob: injection lands turn 1–2
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          settings: ".claude/settings.json"
 
-      - name: Upload execution log
-        if: always()                             # reliable confirmation signal (posts even if run "fails")
-        uses: actions/upload-artifact@v4
-        with:
-          name: claude-triage-${{ github.event.issue.number }}
-          path: ${{ steps.claude.outputs.execution_file }}
-          if-no-files-found: warn
+          # Optional: Customize the trigger phrase (default: @claude)
+          # trigger_phrase: "/claude"
+
+          # Optional: Trigger when specific user is assigned to an issue
+          # assignee_trigger: "claude-bot"
+
+          # Optional: Configure Claude's behavior with CLI arguments
+          claude_args: |
+            --model claude-opus-4-5-20251101
+            --max-turns 30
+          # --allowedTools "Bash(npm install),Bash(npm run build),Bash(npm run test:*),Bash(npm run lint:*)"
+          #   --system-prompt "Follow our coding standards. Ensure all new code has tests. Use TypeScript for new files."
